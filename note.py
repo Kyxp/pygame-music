@@ -14,5 +14,7 @@ class Note():
         self.y += self.speed * dt # default speed
     
     def draw(self, surface):
-        rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        pygame.draw.rect(surface, self.colour, rect)
+        center_x = int(self.x + self.width / 2)
+        center_y = int(self.y + self.height / 2)
+        radius = min(self.width, self.height) // 2
+        pygame.draw.circle(surface, self.colour, (center_x, center_y), radius)
