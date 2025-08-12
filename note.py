@@ -1,4 +1,4 @@
-# note class
+# note class by Kieron Pang, for Music Game
 import pygame
 
 class Note():
