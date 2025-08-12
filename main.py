@@ -4964,12 +4964,16 @@ def select_song(screen, sounds):
         ("High Tide by Moona Hoshinova", "music/High Tide.mp3", "covers/high tide.jpeg"),
         ("It's Okay Now by MIMI (Covered by Kotoha)", "music/It's Okay Now.mp3", "covers/it's okay now cover.jpeg"),
         ("Psycho by Red Velvet", "music/Psycho.mp3", "covers/psycho_cover.jpg"),
-        ("RISE UP by NiziU", "music/RISE UP.mp3", "covers/rise up.jpg")
+        ("RISE UP by NiziU", "music/RISE UP.mp3", "covers/rise up.jpg"),
+        ("Quit", None, None)
     ]
 
     # Filter songs to only those with a non-empty beatmap in song_maps
     songs = []
     for name, path, cover in all_songs:
+        if name == "Quit":
+            songs.append((name, path, cover))
+            continue
         beatmap = song_maps.get(path)
         if beatmap and len(beatmap) > 0:
             songs.append((name, path, cover))
@@ -4985,30 +4989,38 @@ def select_song(screen, sounds):
     # Preload album covers with debug prints and fallback surface
     covers = []
     for _, _, cover_path in songs:
-        try:
-            print(f"Loading cover: {cover_path}  Exists: {os.path.exists(cover_path)}")
-            img = pygame.image.load(cover_path)
-            try:
-                img = img.convert_alpha()
-            except Exception:
-                img = img.convert()
-            img = pygame.transform.scale(img, (300, 300))
-        except Exception as e:
-            print(f"Failed to load cover '{cover_path}': {e}")
+        if cover_path is None:
             img = pygame.Surface((300, 300))
-            img.fill((200, 200, 200))
-            fallback_font = pygame.font.SysFont("Arial", 20)
-            text_surf = fallback_font.render("No Cover", True, (100, 0, 0))
-            file_surf = fallback_font.render(cover_path, True, (50,50,50))
-            img.blit(text_surf, (10, 10))
-            img.blit(file_surf, (10, 40))
-        covers.append(img)
+            img.fill((100, 100, 100))
+            font_quit = pygame.font.SysFont("Arial", 48, bold=True)
+            text_surf = font_quit.render("QUIT", True, (255, 0, 0))
+            img.blit(text_surf, text_surf.get_rect(center=(150, 150)))
+            covers.append(img)
+        else:
+            try:
+                print(f"Loading cover: {cover_path}  Exists: {os.path.exists(cover_path)}")
+                img = pygame.image.load(cover_path)
+                try:
+                    img = img.convert_alpha()
+                except Exception:
+                    img = img.convert()
+                img = pygame.transform.scale(img, (300, 300))
+            except Exception as e:
+                print(f"Failed to load cover '{cover_path}': {e}")
+                img = pygame.Surface((300, 300))
+                img.fill((200, 200, 200))
+                fallback_font = pygame.font.SysFont("Arial", 20)
+                text_surf = fallback_font.render("No Cover", True, (100, 0, 0))
+                file_surf = fallback_font.render(cover_path, True, (50,50,50))
+                img.blit(text_surf, (10, 10))
+                img.blit(file_surf, (10, 40))
+            covers.append(img)
 
     # main selection loop
     while True:
         screen.fill(WHITE)
         title = font.render("Select a song:", True, BLACK)
-        screen.blit(title, (50, 50))
+        screen.blit(title, (50, 30))
 
         for i, (name, _, _) in enumerate(songs):
             if i == selected_index:
@@ -5019,7 +5031,7 @@ def select_song(screen, sounds):
                 font_to_use = pygame.font.SysFont("Arial", 32)
 
             text = font_to_use.render(f"{i+1}. {name}", True, color)
-            text_pos = (80, 105 + i * 50)
+            text_pos = (80, 85 + i * 50)
 
             if i == selected_index:
                 highlight_rect = pygame.Rect(text_pos[0]-10, text_pos[1]-5, text.get_width()+20, text.get_height()+10)
@@ -5046,6 +5058,7 @@ def select_song(screen, sounds):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+
             elif event.type == pygame.KEYDOWN:
                 sounds.play()
                 if event.key == pygame.K_UP:
@@ -5081,7 +5094,7 @@ def calculateAccuracy(hit_counts):
     accuracy = weighted_score / max_possible_score * 100  # percentage
     return accuracy
    
-def show_hit_counts(screen, hit_counts, colour, start_x=580, start_y=80, line_height=25):
+def show_hit_counts(screen, hit_counts, colour, start_x=580, start_y=10, line_height=25):
     font = pygame.font.SysFont("Arial", 24)
     y = start_y
     for hit_type in ["PERFECT", "GOOD", "OKAY", "MISS", "BAD"]:
@@ -5090,58 +5103,16 @@ def show_hit_counts(screen, hit_counts, colour, start_x=580, start_y=80, line_he
         screen.blit(surf, (start_x - surf.get_width(), y))
         y += line_height
 
-def main():
-    # Pygame init
-    pygame.init()
-    pygame.mixer.init()
-
-    # timers
-    finish_timer_started = False
-    finish_timer = 0
-    start_delay = 0 # originally 2000
-    music_started = False
-
-    # icon
-    icon = pygame.image.load("icon/icon.png")
-    pygame.display.set_icon(icon)
-
-    # setup screen
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Music Game :D")
-
-    clock = pygame.time.Clock()
-
-    soundList = []
-    # music
-    sound = "sfx/kick.mp3"
-    sound2 = "sfx/stick.mp3"
-    sound3 = "sfx/kick2.mp3"
-    sound4 = "sfx/chime.mp3"
-    sound5 = "sfx/error.mp3"
-    choose = "sfx/choose.mp3"
-
-    kick = pygame.mixer.Sound(sound)
-    stick = pygame.mixer.Sound(sound2)
-    kick2 = pygame.mixer.Sound(sound3)
-    chime = pygame.mixer.Sound(sound4)
-    error = pygame.mixer.Sound(sound5)
-    choose = pygame.mixer.Sound(choose)
-    soundList.append(kick)
-    soundList.append(stick)
-    soundList.append(kick2)
-    soundList.append(chime)
-    soundList.append(error)
-
-    song_path = select_song(screen, choose)
+def play_song(screen, song_path, soundList):
+    global hit_counts  # make sure this is reset for each song
+    hit_counts = {"PERFECT": 0, "GOOD": 0, "OKAY": 0, "MISS": 0, "BAD": 0}
 
     # map
     songName = song_maps.get(song_path)
     if songName is None:
         print("No note map found for the selected song!")
-        pygame.quit()
-        return
+        return  # go back to menu
 
-    # load audio
     pygame.mixer.music.load(song_path)
 
     # gifs
@@ -5149,168 +5120,148 @@ def main():
     all_gifs_frames = [load_gif_frames(folder) for folder in gif_folders]
     current_gif_frames = random.choice(all_gifs_frames)
 
-    # animation gifs state variables
-    frame_index = 0       # start at first frame
+    frame_index = 0
     frame_time = 0
-    frame_duration = 50 # can adjust
-
-    # note speed
+    frame_duration = 50
     note_speed = song_speeds.get(song_path, 0.25)
 
-    # setup lanes
     lanes = [LANE_START_X + i * LANE_GAP for i in range(LANE_COUNT)]
     circle_pos_y = HIT_Y
 
-    # setup variables
     flash_timers = [0] * LANE_COUNT
     notes = []
     points = 0
-
     spawn_index = 0
     start_ticks = pygame.time.get_ticks()
     
     combo = 0
     multiplier = 1
-
-    # combo
     full_combo = False
+    finish_timer_started = False
+    finish_timer = 0
+    start_delay = 0
+    music_started = False
 
-    #running
+    clock = pygame.time.Clock()
     running = True
+
     while running:
         dt = clock.tick(FPS)
 
-        # Update GIF animation timer and frame
         frame_time += dt
         if frame_time >= frame_duration:
             frame_time = 0
-            frame_index = (frame_index + 1) % len(current_gif_frames)  # loop back to first frame
+            frame_index = (frame_index + 1) % len(current_gif_frames)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-
+                pygame.quit()
+                exit()
             else:
                 flash_timers, points, combo, multiplier, hit_counts = checkKeys(event, flash_timers, notes, lanes, points, combo, multiplier, soundList)
 
         points, combo, multiplier = update_notes(notes, dt, points, combo, multiplier, soundList)
 
-        # note colour
         note_colour = SONG_NOTE_COLOURS.get(song_path, (0, 0, 255))
-
         elapsed_time = pygame.time.get_ticks() - start_ticks
         spawn_index = spawn_notes(songName, notes, lanes, elapsed_time, spawn_index, note_speed, note_colour)
 
-        # play audio
         if not music_started and elapsed_time >= start_delay:
             pygame.mixer.music.play()
             music_started = True
 
-        # update flash timers
         for i in range(len(flash_timers)):
             flash_timers[i] = max(0, flash_timers[i] - dt)
 
-        # draw
         screen.fill(WHITE)
         drawArea(screen, 590, 0, 650, SCREEN_HEIGHT, SEMI_BLACK)
         drawArea(screen, 0, 580, SCREEN_WIDTH, 70, WHITE)
 
         draw_lanes(screen, lanes, circle_pos_y)
-
         draw_flash(screen, flash_timers, lanes)
 
         for note in notes:
             note.draw(screen)
 
-
         draw_flash(screen, flash_timers, lanes)
         showPoints(screen, points, BLACK)
         showCombo(screen, combo, multiplier, BLACK)
 
-        # Draw GIF frame on right side
         gif_x = SCREEN_WIDTH - 1230
         gif_y = 200
         screen.blit(current_gif_frames[frame_index], (gif_x, gif_y))
 
-        # signature
+        # credits & UI
         font = pygame.font.SysFont("Arial", 18)
-        credit_text = font.render("https://github.com/Kyxp", True, MIDBLUE)  # Black text
-        text_rect = credit_text.get_rect(topleft=(20,660))
-        screen.blit(credit_text, text_rect)
+        screen.blit(font.render("https://github.com/Kyxp", True, MIDBLUE), (20,660))
+        screen.blit(font.render("@_yumekuu", True, MIDBLUE), (20,690))
+        screen.blit(font.render("2025", True, MIDBLUE), (20,600))
+        screen.blit(font.render("NOT INTENDED FOR PUBLIC USE.", True, MIDBLUE), (20,630))
+        screen.blit(font.render("CONTROLS: A-S-K-L", True, MIDBLUE), (200,0))
 
-        # signature2
-        font = pygame.font.SysFont("Arial", 18)
-        credit_text = font.render("@_yumekuu", True, MIDBLUE)  # Black text
-        text_rect = credit_text.get_rect(topleft=(20,690))
-        screen.blit(credit_text, text_rect)
-
-        # 2025
-        font = pygame.font.SysFont("Arial", 18)
-        credit_text = font.render("2025", True, MIDBLUE)  # Black text
-        text_rect = credit_text.get_rect(topleft=(20,600))
-        screen.blit(credit_text, text_rect)
-
-        # Public Use
-        font = pygame.font.SysFont("Arial", 18)
-        credit_text = font.render("NOT INTENDED FOR PUBLIC USE.", True, MIDBLUE)  # Black text
-        text_rect = credit_text.get_rect(topleft=(20,630))
-        screen.blit(credit_text, text_rect)
-
-        # controls
-        font = pygame.font.SysFont("Arial", 18)
-        credit_text = font.render("CONTROLS: A-S-K-L", True, MIDBLUE)  # Black text
-        text_rect = credit_text.get_rect(topleft=(200,0))
-        screen.blit(credit_text, text_rect)
-
-        # Accuracy
         accuracy = calculateAccuracy(hit_counts)
-
         font = pygame.font.SysFont("Arial", 24)
-        accuracy_text = font.render(f"Accuracy: {accuracy:.2f}%", True, BLACK)
-        screen.blit(accuracy_text, (10, 90))
+        screen.blit(font.render(f"Accuracy: {accuracy:.2f}%", True, BLACK), (10, 90))
 
         show_hit_counts(screen, hit_counts, BLUE)
 
-        # Check if beatmap finished and no notes remain
         if spawn_index >= len(songName) and len(notes) == 0:
             if not finish_timer_started:
                 finish_timer_started = True
                 finish_timer = 0
-
-                if hit_counts["MISS"] == 0 and hit_counts["BAD"] == 0 and sum(hit_counts.values()) > 0:
-                    full_combo = True
-                else:
-                    full_combo = False
+                full_combo = hit_counts["MISS"] == 0 and hit_counts["BAD"] == 0 and sum(hit_counts.values()) > 0
             else:
                 finish_timer += dt
-                # Draw thank you only after 2 seconds (2000 ms)
                 if finish_timer >= 2000:
                     font = pygame.font.SysFont("Arial", 36, bold=True)
-                    thank_you_text = font.render("Thank you for playing!", True, (0, 128, 0))  # dark green
-                    text_rect = thank_you_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
-                    screen.blit(thank_you_text, text_rect)
-                    
-                    # debug
-                    # full_combo = True
+                    text = font.render("Thank you for playing!", True, (0, 128, 0))
+                    screen.blit(text, text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)))
                     if full_combo:
                         combo_font = pygame.font.SysFont("Arial", 48, bold=True)
-                        combo_text = combo_font.render("FULL COMBO!", True, (255, 215, 0))  # gold color
-                        combo_rect = combo_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60))
-                        screen.blit(combo_text, combo_rect)
+                        combo_text = combo_font.render("FULL COMBO!", True, (255, 215, 0))
+                        screen.blit(combo_text, combo_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 60)))
 
-                if finish_timer >= 20000: 
-                    running = False
+                if finish_timer >= 3000: 
+                    for event in pygame.event.get():
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_RETURN or event.key == pygame.K_ESCAPE:
+                                return
+                        elif event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
         else:
             finish_timer_started = False
             finish_timer = 0
 
-        # Update display
-        pygame.display.flip() 
+        pygame.display.flip()
 
-    # quit
-    pygame.quit()
-    
+
+def main():
+    pygame.init()
+    pygame.mixer.init()
+
+    icon = pygame.image.load("icon/icon.png")
+    pygame.display.set_icon(icon)
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Music Game :D")
+
+    # load sounds once
+    soundList = [
+        pygame.mixer.Sound("sfx/kick.mp3"),
+        pygame.mixer.Sound("sfx/stick.mp3"),
+        pygame.mixer.Sound("sfx/kick2.mp3"),
+        pygame.mixer.Sound("sfx/chime.mp3"),
+        pygame.mixer.Sound("sfx/error.mp3")
+    ]
+    choose_sound = pygame.mixer.Sound("sfx/choose.mp3")
+
+    while True:
+        song_path = select_song(screen, choose_sound)
+        if song_path is None:
+            pygame.quit()
+            exit()  # or sys.exit()
+        play_song(screen, song_path, soundList)
+
+
 if __name__ == "__main__":
     main()
-
-
