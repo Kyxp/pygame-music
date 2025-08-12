@@ -6,6 +6,7 @@ import pygame
 from note import Note
 import random
 import os
+import sys
 
 # CONSTANTS
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
@@ -4981,7 +4982,7 @@ def select_song(screen, sounds):
     if not songs:
         print("No songs with valid beatmaps available!")
         pygame.quit()
-        exit()
+        sys.exit()
 
     selected_index = 0
     clock = pygame.time.Clock()
@@ -5057,7 +5058,7 @@ def select_song(screen, sounds):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                sys.exit()
 
             elif event.type == pygame.KEYDOWN:
                 sounds.play()
@@ -5156,7 +5157,7 @@ def play_song(screen, song_path, soundList):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                sys.exit()
             else:
                 flash_timers, points, combo, multiplier, hit_counts = checkKeys(event, flash_timers, notes, lanes, points, combo, multiplier, soundList)
 
@@ -5228,7 +5229,7 @@ def play_song(screen, song_path, soundList):
                                 return
                         elif event.type == pygame.QUIT:
                             pygame.quit()
-                            exit()
+                            sys.exit()
         else:
             finish_timer_started = False
             finish_timer = 0
@@ -5259,7 +5260,7 @@ def main():
         song_path = select_song(screen, choose_sound)
         if song_path is None:
             pygame.quit()
-            exit()  # or sys.exit()
+            sys.exit() 
         play_song(screen, song_path, soundList)
 
 
